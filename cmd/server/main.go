@@ -10,6 +10,8 @@ import (
 	
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/xsynch/learn-pub-sub-starter/internal/pubsub"
+	"github.com/xsynch/learn-pub-sub-starter/internal/routing"
 )
 
 func main() {
@@ -26,7 +28,12 @@ func main() {
 		log.Fatalf("Error creating rabbit mq channel: %s",err)
 	}
 	defer rabbitmqChan.Close()
+	pstate := routing.PlayingState{IsPaused: true}
 
+	err = pubsub.PublishJSON(rabbitmqChan, string(routing.ExchangePerilDirect),string(routing.PauseKey),pstate)
+	if err != nil {
+		log.Fatalf("Error with PublishJSON: %s",err)
+	}
 	
 
 	// wait for ctrl+c

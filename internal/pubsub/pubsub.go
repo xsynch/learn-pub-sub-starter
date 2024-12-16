@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	amqp "github.com/rabbitmq/amqp091-go"
+	
 )
 
 
@@ -22,4 +23,40 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error{
 		return err 
 	}
 	return nil 
+}
+
+func DeclareAndBind(
+	conn *amqp.Connection,
+	exchange,
+	queueName,
+	key string,
+	simpleQueueType int, // an enum to represent "durable" or "transient"
+) (*amqp.Channel, amqp.Queue, error) {
+	var durability bool 
+	var ad bool
+	var ex bool
+	tChannel, err := conn.Channel()
+	if err != nil {
+		return nil,amqp.Queue{}, err 
+	}
+	if simpleQueueType == 1 {
+		durability = true
+		ad =  false
+		ex = false 
+
+	} else {
+		durability = false 
+		ad = true 
+		ex = true 
+	}
+	tQueue, err := tChannel.QueueDeclare(queueName,durability,ad, ex,false,nil)
+	if err != nil {
+		return nil, amqp.Queue{},err
+	}
+	err = tChannel.QueueBind(queueName,key,exchange,false,nil)
+	if err != nil {
+		return nil,amqp.Queue{},nil 
+	}
+	return tChannel, tQueue,nil 
+	
 }
