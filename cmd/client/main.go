@@ -3,8 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
+
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/xsynch/learn-pub-sub-starter/internal/pubsub"
@@ -36,12 +35,45 @@ func main() {
 		log.Fatalf("Error with Declare and Bind: %s",err)
 	}
 
+	gs := gamelogic.NewGameState(username)
+	for {
+		commands := gamelogic.GetInput()
+		cmd := commands[0]
+		switch {
+		case cmd == "spawn":
+			log.Printf("Spawning a new military with: %s\n",commands[1:])
+			err = gs.CommandSpawn(commands)
+			
+			if err != nil {
+				log.Printf("Error spawning army: %s\n",err)
+			}
+		case cmd == "move":
+			log.Printf("Moving the army\n")
+			_,err = gs.CommandMove(commands)
+			if err != nil {
+				log.Printf("Error moving the army: %s",err)
+			}
+		case cmd == "help":
+			gamelogic.PrintClientHelp()
+		case cmd == "status":
+			gs.CommandStatus()
+		case cmd == "spam":
+			log.Printf("Spamming not allowed yet\n")
+		case cmd == "quit":
+			gamelogic.PrintQuit()
+			return 
+		default:
+			log.Printf("Command not found\n")
+
+		}
+	}
+
 
 
 	
 	// wait for ctrl+c
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
-	<-signalChan
-	fmt.Println("Starting Peril client...")
+	// signalChan := make(chan os.Signal, 1)
+	// signal.Notify(signalChan, os.Interrupt)
+	// <-signalChan
+	// fmt.Println("Starting Peril client...")
 }
